@@ -368,3 +368,4 @@ print(differentNumbers.allEqual())
 // Prints "false"
 
 
+var a: String = "Hello World" a= nil*

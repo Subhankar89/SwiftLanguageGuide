@@ -8,18 +8,20 @@ import Combine
 
 class ArticlesViewModel: ObservableObject {
   
-  var networker = Networker()
+  private var networker: Networking
   
   @Published private(set) var articles: [Article] = []
   
   private var cancellables: Set<AnyCancellable> = []
   
+  init(networker: Networking) {
+    self.networker = networker
+  }
+  
   func fetchArticles() {
     let request = ArticleRequest()
-    let decoder = JSONDecoder()
     networker.fetch(request)
-      .decode(type: Articles.self, decoder: decoder)
-      .map { $0.data.map { $0.article } }
+      .tryMap([Article].init)
       .replaceError(with: [])
       .receive(on: DispatchQueue.main)
       .assign(to: \.articles, on: self)

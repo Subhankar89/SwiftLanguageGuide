@@ -30,22 +30,9 @@
 /// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 /// THE SOFTWARE.
 
-import Combine
 import Foundation
 
-protocol Networking {
-  func fetch(_ request: Request) -> AnyPublisher<Data, URLError>
+///encompasses all structs that can be initialized from URLSessions’s output, such as your Article
+protocol URLSessionDecodable {
+  init(from output: Data) throws
 }
-
-class Networker: Networking {
-  func fetch(_ request: Request) -> AnyPublisher<Data, URLError> {
-    var urlRequest = URLRequest(url: request.url)
-    urlRequest.httpMethod = request.method.rawValue
-    
-    return URLSession.shared
-      .dataTaskPublisher(for: urlRequest)
-      .compactMap { $0.data }
-      .eraseToAnyPublisher()
-  }
-}
-

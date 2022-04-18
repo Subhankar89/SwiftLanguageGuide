@@ -9,6 +9,8 @@ import Combine
 
 ///mock networker will implement the Networking protocol but return hard-coded values for each request
 class MockNetworker: Networking {
+  weak var delegate: NetworkingDelegate?
+  
   func fetch(_ request: Request) -> AnyPublisher<Data, URLError> {
     let outputData: Data
     switch request {

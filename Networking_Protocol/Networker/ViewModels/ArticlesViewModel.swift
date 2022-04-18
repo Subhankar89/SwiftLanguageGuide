@@ -16,6 +16,7 @@ class ArticlesViewModel: ObservableObject {
   
   init(networker: Networking) {
     self.networker = networker
+    self.networker.delegate = self
   }
   
   func fetchArticles() {
@@ -23,7 +24,6 @@ class ArticlesViewModel: ObservableObject {
     networker.fetch(request)
       .tryMap([Article].init)
       .replaceError(with: [])
-      .receive(on: DispatchQueue.main)
       .assign(to: \.articles, on: self)
       .store(in: &cancellables)
   }
@@ -39,10 +39,19 @@ class ArticlesViewModel: ObservableObject {
     networker.fetch(request)
       .map(UIImage.init)
       .replaceError(with: nil)
-      .receive(on: DispatchQueue.main)
       .sink { [weak self] image in
         self?.articles[articleIndex].downloadedImage = image
       }
       .store(in: &cancellables)
+  }
+}
+
+extension ArticlesViewModel: NetworkingDelegate {
+  func headers(for networking: Networking) -> [String: String] {
+    return ["Content-Type": "application/vnd.api+json;charset=utf-8"]
+  }
+  
+  func networking(_ networking: Networking, transformPublisher publisher: AnyPublisher<Data, URLError>) -> AnyPublisher<Data, URLError> {
+    publisher.receive(on:DispatchQueue.main).eraseToAnyPublisher()
   }
 }

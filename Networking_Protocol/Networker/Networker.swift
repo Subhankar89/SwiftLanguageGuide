@@ -33,19 +33,46 @@
 import Combine
 import Foundation
 
+protocol NetworkingDelegate: AnyObject {
+  func headers(for networking: Networking) -> [String: String]
+  
+  func networking(_ networking: Networking, transformPublisher: AnyPublisher<Data, URLError>) -> AnyPublisher<Data, URLError>
+}
+
+extension NetworkingDelegate {
+  func headers(for networking: Networking) -> [String: String] {
+    [:]
+  }
+  
+  func networking(_ networking: Networking, transformPublisher publisher: AnyPublisher<Data, URLError>) -> AnyPublisher<Data, URLError> {
+    publisher
+  }
+}
+
 protocol Networking {
+  var delegate: NetworkingDelegate? { get set }
   func fetch(_ request: Request) -> AnyPublisher<Data, URLError>
 }
 
 class Networker: Networking {
+  weak var delegate: NetworkingDelegate?
+  
   func fetch(_ request: Request) -> AnyPublisher<Data, URLError> {
     var urlRequest = URLRequest(url: request.url)
     urlRequest.httpMethod = request.method.rawValue
+    ///make sure to ask the delegate for the headers to add to the URLRequest
+    urlRequest.allHTTPHeaderFields = delegate?.headers(for: self)
     
-    return URLSession.shared
+    let publisher = URLSession.shared
       .dataTaskPublisher(for: urlRequest)
       .compactMap { $0.data }
       .eraseToAnyPublisher()
+
+    if let delegate = delegate {
+      return delegate.networking(self, transformPublisher: publisher)
+    } else {
+      return publisher
+    }
   }
 }
 

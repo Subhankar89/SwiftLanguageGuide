@@ -27,5 +27,20 @@ class ArticlesViewModel: ObservableObject {
   }
   
   func fetchImage(for article: Article) {
+    guard article.downloadedImage == nil,
+          let articleIndex = articles.firstIndex(where: { $0.id == article.id})
+    else {
+      return
+    }
+    
+    let request = ImageRequest(url: article.image)
+    networker.fetch(request)
+      .map(UIImage.init)
+      .replaceError(with: nil)
+      .receive(on: DispatchQueue.main)
+      .sink { [weak self] image in
+        self?.articles[articleIndex].downloadedImage = image
+      }
+      .store(in: &cancellables)
   }
 }

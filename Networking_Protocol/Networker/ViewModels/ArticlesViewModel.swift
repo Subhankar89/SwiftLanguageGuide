@@ -7,14 +7,25 @@ import SwiftUI
 import Combine
 
 class ArticlesViewModel: ObservableObject {
+  
+  var networker = Networker()
+  
   @Published private(set) var articles: [Article] = []
-
+  
   private var cancellables: Set<AnyCancellable> = []
-
+  
   func fetchArticles() {
-    articles = [ArticleRow_Previews.article]
+    let request = ArticleRequest()
+    let decoder = JSONDecoder()
+    networker.fetch(request)
+      .decode(type: Articles.self, decoder: decoder)
+      .map { $0.data.map { $0.article } }
+      .replaceError(with: [])
+      .receive(on: DispatchQueue.main)
+      .assign(to: \.articles, on: self)
+      .store(in: &cancellables)
   }
-
+  
   func fetchImage(for article: Article) {
   }
 }
